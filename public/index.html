@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Omniverse — Comics, Novels & Audiobooks</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #030712;
+      color: #f9fafb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    header {
+      padding: 24px 20px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1f2937;
+      background: rgba(3, 7, 18, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+    }
+    main {
+      flex: 1;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      border: 1px solid #312e81;
+      border-radius: 20px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero h1 {
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+    .hero p {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #6366f1;
+      color: #ffffff;
+      width: 100%;
+    }
+    .btn-primary:active {
+      background: #4f46e5;
+      transform: scale(0.98);
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 12px;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .card-info {
+      flex: 1;
+    }
+    .card-info h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .card-info p {
+      font-size: 12px;
+      color: #9ca3af;
+      line-height: 1.4;
+    }
+    .server-config {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 8px;
+    }
+    .server-config label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .server-config input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #030712;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .server-config input:focus {
+      border-color: #6366f1;
+    }
+    footer {
+      padding: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: #64748b;
+      border-top: 1px solid #111827;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span>Omniverse</span>
+      <span class="badge">Android Edition</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Infinite Stories in Your Hands</h1>
+      <p>Read thousands of manga, web comics, light novels, and listen to immersive audiobooks anytime, anywhere.</p>
+      <button class="btn btn-primary" onclick="launchPlatform()">
+        Launch App Experience &rarr;
+      </button>
+    </div>
+
+    <div>
+      <h2 class="section-title">Integrated Platforms</h2>
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon" style="background: rgba(236, 72, 153, 0.15); color: #f472b6;">🎨</div>
+          <div class="card-info">
+            <h3>Web Comics & Manga</h3>
+            <p>Vertical infinite scroll, panel zoom, dark mode and automated chapter progress.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">📖</div>
+          <div class="card-info">
+            <h3>Novels & Short Stories</h3>
+            <p>Custom typography, sepia modes, font scaling, and reading speed tracking.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🎧</div>
+          <div class="card-info">
+            <h3>Narrated Audiobooks</h3>
+            <p>Playback speed (0.75x–2.0x), sleep timers, and smart background audio resume.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="server-config">
+      <label for="serverUrl">Cloud Server Connection</label>
+      <input type="text" id="serverUrl" placeholder="https://your-platform.vercel.app or http://10.0.2.2:3000">
+      <button class="btn btn-primary" style="background: #3b82f6;" onclick="saveAndConnect()">
+        Connect to Server
+      </button>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 Omniverse Platform. Enterprise Native Android Client.
+  </footer>
+
+  <script>
+    const defaultUrl = localStorage.getItem('omniverse_server_url') || '';
+    if (defaultUrl) {
+      document.getElementById('serverUrl').value = defaultUrl;
+    }
+
+    function launchPlatform() {
+      const url = document.getElementById('serverUrl').value.trim();
+      if (url) {
+        window.location.href = url;
+      } else {
+        alert('Omniverse Native App Initialized! Enter your deployed Vercel/server URL above to connect to live cloud content, or run locally.');
+      }
+    }
+
+    function saveAndConnect() {
+      const url = document.getElementById('serverUrl').value.trim();
+      if (!url) {
+        alert('Please enter a server URL (e.g. https://comic.vercel.app or http://10.0.2.2:3000 for emulator).');
+        return;
+      }
+      localStorage.setItem('omniverse_server_url', url);
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
