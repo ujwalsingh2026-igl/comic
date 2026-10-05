@@ -39,7 +39,7 @@ export class PaymentService {
 
     let amountCents = 0;
     let description = '';
-    let metadata: Record<string, any> = { itemType: input.itemType, targetId: input.targetId };
+    const metadata: Record<string, any> = { itemType: input.itemType, targetId: input.targetId };
 
     if (input.itemType === 'CONTENT') {
       const content = await db.queryOne<any>('SELECT id, title, "priceCents", "isPremium" FROM "Content" WHERE id = $1;', [input.targetId]);
@@ -308,7 +308,7 @@ export class PaymentService {
   /**
    * Get user payment and order history.
    */
-  static async getUserOrders(userId: string) {
+  static async getUserOrders(userId: string): Promise<any> {
     return db.query(
       `SELECT o.id, o."orderNumber", o."amountCents", o.currency, o.status, o.metadata, o."createdAt",
               p."providerPaymentId", p."paymentMethod"
@@ -323,7 +323,7 @@ export class PaymentService {
   /**
    * Get current user subscription status.
    */
-  static async getUserSubscription(userId: string) {
+  static async getUserSubscription(userId: string): Promise<any> {
     return db.queryOne(
       `SELECT * FROM "Subscription"
        WHERE "userId" = $1 AND status = 'ACTIVE' AND ("expiryDate" IS NULL OR "expiryDate" > NOW())

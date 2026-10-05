@@ -113,10 +113,14 @@ export function verifyRazorpaySignature(
     .update(body)
     .digest('hex');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature, 'utf-8'),
-    Buffer.from(signature, 'utf-8')
-  );
+  const buf1 = Buffer.from(expectedSignature, 'utf-8');
+  const buf2 = Buffer.from(signature, 'utf-8');
+
+  if (buf1.length !== buf2.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(buf1, buf2);
 }
 
 /**

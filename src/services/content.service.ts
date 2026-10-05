@@ -18,7 +18,7 @@ export class ContentService {
   /**
    * Homepage discovery feed: featured, trending comics, novels, audiobooks, new releases.
    */
-  static async getHomeFeed() {
+  static async getHomeFeed(): Promise<any> {
     const featured = await db.query(
       `SELECT c.*, a.name as "authorName", a.slug as "authorSlug"
        FROM "Content" c
@@ -94,7 +94,7 @@ export class ContentService {
   /**
    * Global search and discovery with filtering, sorting, and pagination.
    */
-  static async search(options: ContentFilterOptions) {
+  static async search(options: ContentFilterOptions): Promise<any> {
     const page = Math.max(1, options.page || 1);
     const limit = Math.min(50, Math.max(1, options.limit || 16));
     const offset = (page - 1) * limit;
@@ -198,7 +198,7 @@ export class ContentService {
   /**
    * Fetches content by slug with author, genres, and published chapters.
    */
-  static async getContentBySlug(slug: string, currentUserId?: string) {
+  static async getContentBySlug(slug: string, currentUserId?: string): Promise<any> {
     const content = await db.queryOne<any>(
       `SELECT c.*, a.name as "authorName", a.slug as "authorSlug", a.bio as "authorBio", a."avatarUrl" as "authorAvatar",
               ab.narrator, ab."totalDurationSeconds", ab."sampleAudioUrl"
@@ -287,7 +287,7 @@ export class ContentService {
   /**
    * Fetches chapter content with strict authorization and entitlement checking.
    */
-  static async getChapterContent(contentSlug: string, chapterNumber: number, currentUserId?: string) {
+  static async getChapterContent(contentSlug: string, chapterNumber: number, currentUserId?: string): Promise<any> {
     const chapter = await db.queryOne<any>(
       `SELECT ch.*, c.title as "contentTitle", c.slug as "contentSlug", c."contentType", c."isPremium" as "contentIsPremium"
        FROM "Chapter" ch
@@ -305,22 +305,25 @@ export class ContentService {
         throw new AppError('PAYMENT_REQUIRED', 'This chapter requires an active subscription or purchase.', 402);
       }
 
-      // Check user entitlement
-      const hasEntitlement = await db.queryOne(
-        `SELECT 1 FROM "Entitlement"
+      // Check user entitlement or active subscription
+      const hasAccess = await db.queryOne(
+        `SELECT 1 FROM "Subscription"
+         WHERE "userId" = $1 AND status = 'ACTIVE' AND ("expiryDate" IS NULL OR "expiryDate" > NOW())
+         UNION
+         SELECT 1 FROM "Entitlement"
          WHERE "userId" = $1
            AND ("contentId" = $2 OR "chapterId" = $3 OR ("contentId" IS NULL AND "chapterId" IS NULL))
            AND ("expiresAt" IS NULL OR "expiresAt" > NOW());`,
         [currentUserId, chapter.contentId, chapter.id]
       );
 
-      if (!hasEntitlement) {
+      if (!hasAccess) {
         throw new AppError('PAYMENT_REQUIRED', 'Please purchase this content or upgrade your subscription to read.', 402);
       }
     }
 
     // Return chapter payload based on content type
-    let data: any = {};
+    const data: Record<string, any> = {};
 
     if (chapter.contentType === 'COMIC') {
       const pages = await db.query(

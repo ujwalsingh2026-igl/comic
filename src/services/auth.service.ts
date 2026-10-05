@@ -275,14 +275,20 @@ export class AuthService {
       phone: string;
       codeHash: string;
       attempts: number;
-      expiresAt: Date;
-    }>('SELECT * FROM "PhoneOtpCode" WHERE phone = $1 AND "verifiedAt" IS NULL ORDER BY "createdAt" DESC LIMIT 1;', [cleanedPhone]);
+      isExpired: boolean;
+    }>(
+      `SELECT id, phone, "codeHash", attempts, ("expiresAt" <= NOW()) as "isExpired"
+       FROM "PhoneOtpCode"
+       WHERE phone = $1 AND "verifiedAt" IS NULL
+       ORDER BY "createdAt" DESC LIMIT 1;`,
+      [cleanedPhone]
+    );
 
     if (!otpRecord) {
       throw new AppError('BAD_REQUEST', 'No active OTP found. Please request a new code.');
     }
 
-    if (new Date() > new Date(otpRecord.expiresAt)) {
+    if (otpRecord.isExpired) {
       throw new AppError('BAD_REQUEST', 'OTP has expired. Please request a new code.');
     }
 

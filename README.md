@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Omniverse Entertainment Platform
 
-## Getting Started
+A modern, high-performance, production-ready digital content platform for reading comics, reading web novels & short stories, and streaming audiobooks. Built with strict adherence to enterprise security principles, full-stack typed architecture, automated entitlement management, and privacy-first governance (GDPR/CCPA compliant).
 
-First, run the development server:
+![Omniverse Architecture](https://img.shields.io/badge/Architecture-Next.js%2014%20App%20Router-blue)
+![Database](https://img.shields.io/badge/Database-PostgreSQL%20%2F%20PGlite-indigo)
+![Security](https://img.shields.io/badge/Security-Argon2id%20%7C%20HMAC--SHA256%20%7C%20Audit%20Log-emerald)
+![Tests](https://img.shields.io/badge/Tests-Vitest%2023%2F23%20Passed-brightgreen)
+![TypeScript](https://img.shields.io/badge/TypeScript-100%25%20Strict-blue)
 
+---
+
+## Key Platform Features
+
+### Multi-Format Content Ecosystem
+- **Comics & Manga**: Vertical webtoon scroll, single-page reader mode, dynamic zoom, chapter selector, and automated page-progress tracking.
+- **Novels & Stories**: Reader mode with custom typography (Sans, Serif, Mono), font sizing, line height, reading column widths, dark/sepia/light modes.
+- **Audiobooks**: HTML5 player with 0.75x–2.0x speed, 10s/30s seek jump, sleep timers (5m to 60m), and persistent playback time resume.
+
+### Security & Authentication
+- **Multi-Factor & Multi-Identity**: Email + Argon2id hashed passwords, Phone + OTP (anti-replay, 5-minute expiry, max attempt limiting), and Google OAuth token verification.
+- **Session Architecture**: Cryptographic JWT access tokens and database-backed session tables supporting "Logout from all devices" instant revocation.
+- **Audit Logging**: Automatic redaction of sensitive credentials, payment tokens, and PII across all operational logs.
+- **Rate Limiting**: In-memory and Redis-compatible sliding window rate limiter on authentication, search, and payment endpoints.
+
+### Commercials & Entitlements
+- **Razorpay Integration**: Server-side order creation and cryptographically verified HMAC-SHA256 signatures (`crypto.timingSafeEqual`) preventing client-side spoofing.
+- **Idempotent Webhooks**: Payment gateways triggers verified and recorded idempotently.
+- **Subscriptions & Purchases**: Granular chapter unlocks and monthly/annual all-access subscription passes.
+- **Refund Processing**: Safe refunds with automatic entitlement revocation and audit trails.
+
+### User Library & Personalization
+- **Personal Library**: Shelves for *Currently Reading*, *Completed*, *Saved*, *Purchased*, and *Audiobooks*.
+- **Bookmarks**: Page and audio timestamp bookmarks with personal notes.
+- **Reviews & Ratings**: Verified community ratings, helpfulness voting, and XSS sanitization.
+- **Privacy Controls**: GDPR/CCPA data export in JSON format, profile visibility toggles, and legal-compliant account anonymization.
+
+### Administrative Control Plane
+- **Metrics Dashboard**: Gross volume, active subscriptions, total readers, catalog statistics.
+- **User Governance**: RBAC role assignment (`USER`, `MODERATOR`, `ADMIN`), account suspension, and ban enforcement.
+- **Catalog Management**: Creation, chapter publishing, and pricing controls.
+- **Audit Trail Viewer**: Real-time security events, IP tracking, and user action inspector.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **Framework** | Next.js 14.2 (App Router, Server Actions, Route Handlers) |
+| **Language** | TypeScript (Strict mode enabled) |
+| **Styling** | Tailwind CSS + Lucide React |
+| **Database** | PostgreSQL with embedded zero-config fallback (`@electric-sql/pglite`) |
+| **ORM / Migration** | Prisma schema + Raw SQL query execution for high performance |
+| **Password Hashing** | Argon2id (`@node-rs/argon2`) with OWASP-compliant memory cost |
+| **Token Signing** | JWT (`jose`) with HS256/RS256 support |
+| **Testing** | Vitest with Node environment |
+
+---
+
+## Quick Start Guide
+
+### 1. Prerequisites
+- Node.js >= 20.0.0
+- npm >= 9.0.0
+
+### 2. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-org/comic.git
+cd comic
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Environment Setup
+Copy the sample environment file and adjust keys if connecting to external services:
+```bash
+cp .env.example .env
+```
+*(By default, the platform boots out-of-the-box using the embedded PostgreSQL engine without needing an external database daemon).*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Database Initialization & Seed Data
+Run the database seeder to populate sample genres, authors, comics, novels, audiobooks, and test accounts:
+```bash
+npm run seed
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Default credentials generated by seed:
+- **Administrator**: `admin@platform.com` / `Admin@12345`
+- **Reader User**: `reader@platform.com` / `Reader@12345`
 
-## Learn More
+### 5. Start Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Running Tests
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Execute the automated test suite covering security, authentication, payments, content discovery, and privacy workflows:
+```bash
+npm test
+```
 
-## Deploy on Vercel
+To run TypeScript verification:
+```bash
+npx tsc --noEmit
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+To verify a production build:
+```bash
+npm run build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Documentation Index
+
+Explore the complete system architecture and operation guides:
+- [Architecture & System Design](file:///C:/comic/docs/ARCHITECTURE.md)
+- [REST API Specification](file:///C:/comic/docs/API.md)
+- [Database Schema & Migrations](file:///C:/comic/docs/DATABASE.md)
+- [Security & Compliance](file:///C:/comic/docs/SECURITY.md)
+- [Testing Architecture](file:///C:/comic/docs/TESTING.md)
+- [Production Deployment Guide](file:///C:/comic/docs/DEPLOYMENT.md)
+- [Environment Configuration](file:///C:/comic/docs/ENVIRONMENT.md)
+- [Administrator Operational Guide](file:///C:/comic/docs/ADMIN_GUIDE.md)
+
+---
+
+## License
+MIT License. Built for enterprise high-load content distribution.

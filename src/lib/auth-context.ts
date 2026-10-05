@@ -43,7 +43,7 @@ export async function getOptionalUser(req: NextRequest): Promise<AuthenticatedUs
     }
 
     return null;
-  } catch (err) {
+  } catch {
     return null;
   }
 }

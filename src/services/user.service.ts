@@ -117,7 +117,7 @@ export class UserService {
   /**
    * Updates user privacy settings.
    */
-  static async updatePrivacy(input: UpdatePrivacySettingsInput) {
+  static async updatePrivacy(input: UpdatePrivacySettingsInput): Promise<any> {
     const fields: string[] = [];
     const values: any[] = [];
     let idx = 1;

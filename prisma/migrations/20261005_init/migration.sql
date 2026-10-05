@@ -367,7 +367,7 @@ CREATE TABLE "Subscription" (
 CREATE TABLE "Entitlement" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "contentId" TEXT NOT NULL,
+    "contentId" TEXT,
     "chapterId" TEXT,
     "source" "EntitlementSource" NOT NULL DEFAULT 'PURCHASE',
     "expiresAt" TIMESTAMP(3),

@@ -1,12 +1,12 @@
 import { PGlite } from '@electric-sql/pglite';
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import { env } from './env';
 
 export interface DbClient {
-  query<T = unknown>(sqlText: string, params?: unknown[]): Promise<T[]>;
-  queryOne<T = unknown>(sqlText: string, params?: unknown[]): Promise<T | null>;
+  query<T = any>(sqlText: string, params?: unknown[]): Promise<T[]>;
+  queryOne<T = any>(sqlText: string, params?: unknown[]): Promise<T | null>;
   execute(sqlText: string, params?: unknown[]): Promise<number>;
 }
 
@@ -32,7 +32,19 @@ class DatabaseManager implements DbClient {
         fs.mkdirSync(dataDir, { recursive: true });
       }
 
-      this.pgliteInstance = new PGlite(dataDir);
+      try {
+        this.pgliteInstance = new PGlite(dataDir);
+        await this.pgliteInstance.waitReady;
+      } catch {
+        // If dataDir was locked or corrupted by previous unexpected process termination, recreate cleanly
+        console.warn('[DB] Recreating clean embedded database instance...');
+        try {
+          fs.rmSync(dataDir, { recursive: true, force: true });
+        } catch {}
+        fs.mkdirSync(dataDir, { recursive: true });
+        this.pgliteInstance = new PGlite(dataDir);
+        await this.pgliteInstance.waitReady;
+      }
       await this.runMigrationsIfNeeded();
       this.isInitialized = true;
     }
@@ -63,7 +75,7 @@ class DatabaseManager implements DbClient {
     }
   }
 
-  public async query<T = unknown>(sqlText: string, params: unknown[] = []): Promise<T[]> {
+  public async query<T = any>(sqlText: string, params: unknown[] = []): Promise<T[]> {
     await this.ensureInitialized();
 
     if (this.pgPool) {
@@ -76,7 +88,7 @@ class DatabaseManager implements DbClient {
     throw new Error('Database client not initialized');
   }
 
-  public async queryOne<T = unknown>(sqlText: string, params: unknown[] = []): Promise<T | null> {
+  public async queryOne<T = any>(sqlText: string, params: unknown[] = []): Promise<T | null> {
     const rows = await this.query<T>(sqlText, params);
     return rows.length > 0 ? rows[0] : null;
   }
