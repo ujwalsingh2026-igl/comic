@@ -1,0 +1,662 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  AUTHOR
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  PHONE
+}
+
+enum ContentType {
+  COMIC
+  NOVEL
+  SHORT_STORY
+  AUDIOBOOK
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum ReleaseStatus {
+  ONGOING
+  COMPLETED
+}
+
+enum LibraryShelf {
+  CURRENTLY_READING
+  COMPLETED
+  SAVED
+  PURCHASED
+}
+
+enum OrderStatus {
+  CREATED
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+  MOCK_GATEWAY
+}
+
+enum SubscriptionPlan {
+  FREE
+  MONTHLY_PREMIUM
+  YEARLY_PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAST_DUE
+}
+
+enum EntitlementSource {
+  PURCHASE
+  SUBSCRIPTION
+  ADMIN_GRANT
+}
+
+enum NotificationType {
+  NEW_CHAPTER
+  NEW_AUDIOBOOK
+  NEW_RELEASE
+  PAYMENT_SUCCESS
+  PAYMENT_FAILURE
+  SUBSCRIPTION_EXPIRY
+  SECURITY_ALERT
+  NEW_LOGIN
+  PASSWORD_CHANGE
+}
+
+model User {
+  id              String      @id @default(uuid())
+  email           String?     @unique
+  phone           String?     @unique
+  name            String
+  username        String?     @unique
+  passwordHash    String?
+  role            Role        @default(USER)
+  avatarUrl       String?
+  emailVerified   Boolean     @default(false)
+  phoneVerified   Boolean     @default(false)
+  status          UserStatus  @default(ACTIVE)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  identities               UserIdentity[]
+  sessions                 Session[]
+  privacySettings          PrivacySettings?
+  libraryItems             Library[]
+  readingProgress          ReadingProgress[]
+  listeningProgress        ListeningProgress[]
+  bookmarks                Bookmark[]
+  reviews                  Review[]
+  helpfulVotes             ReviewHelpfulVote[]
+  orders                   Order[]
+  subscriptions            Subscription[]
+  entitlements             Entitlement[]
+  notifications            Notification[]
+  notificationPreferences  NotificationPreferences?
+  auditLogs                AuditLog[]
+  followedAuthors          AuthorFollower[]
+  passwordResetTokens      PasswordResetToken[]
+  emailVerificationTokens  EmailVerificationToken[]
+  authorProfile            Author?
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([status])
+}
+
+model UserIdentity {
+  id             String       @id @default(uuid())
+  userId         String
+  provider       AuthProvider
+  providerUserId String
+  identityData   String?      // JSON string of provider profile
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  sessionToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+}
+
+model PrivacySettings {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  isProfilePublic      Boolean  @default(false)
+  showReadingActivity  Boolean  @default(false)
+  showReviews          Boolean  @default(true)
+  allowPersonalization Boolean  @default(true)
+  allowAnalytics       Boolean  @default(true)
+  allowMarketing       Boolean  @default(false)
+  allowPushAlerts      Boolean  @default(true)
+  allowPersonalizedAds Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model PhoneOtpCode {
+  id         String    @id @default(uuid())
+  phone      String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone])
+  @@index([expiresAt])
+}
+
+model Author {
+  id          String   @id @default(uuid())
+  userId      String?  @unique
+  name        String
+  slug        String   @unique
+  bio         String?
+  avatarUrl   String?
+  website     String?
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contents  Content[]
+  followers AuthorFollower[]
+
+  @@index([slug])
+  @@index([name])
+}
+
+model AuthorFollower {
+  id        String   @id @default(uuid())
+  userId    String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  author Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, authorId])
+  @@index([userId])
+  @@index([authorId])
+}
+
+model Genre {
+  id          String         @id @default(uuid())
+  name        String         @unique
+  slug        String         @unique
+  description String?
+  createdAt   DateTime       @default(now())
+  contents    ContentGenre[]
+
+  @@index([slug])
+}
+
+model Content {
+  id            String        @id @default(uuid())
+  title         String
+  slug          String        @unique
+  description   String
+  contentType   ContentType
+  authorId      String
+  artistName    String?
+  coverUrl      String
+  bannerUrl     String?
+  status        ContentStatus @default(DRAFT)
+  releaseStatus ReleaseStatus @default(ONGOING)
+  isPremium     Boolean       @default(false)
+  priceCents    Int           @default(0)
+  language      String        @default("en")
+  ratingAverage Float         @default(0)
+  ratingCount   Int           @default(0)
+  viewCount     Int           @default(0)
+  publishedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  author            Author              @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  genres            ContentGenre[]
+  chapters          Chapter[]
+  audiobookDetail   Audiobook?
+  libraryItems      Library[]
+  readingProgress   ReadingProgress[]
+  listeningProgress ListeningProgress[]
+  bookmarks         Bookmark[]
+  reviews           Review[]
+  entitlements      Entitlement[]
+
+  @@index([slug])
+  @@index([contentType])
+  @@index([status])
+  @@index([isPremium])
+  @@index([ratingAverage])
+  @@index([authorId])
+}
+
+model ContentGenre {
+  id        String @id @default(uuid())
+  contentId String
+  genreId   String
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  genre   Genre   @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, genreId])
+  @@index([contentId])
+  @@index([genreId])
+}
+
+model Chapter {
+  id            String    @id @default(uuid())
+  contentId     String
+  chapterNumber Float
+  title         String
+  slug          String
+  isPremium     Boolean   @default(false)
+  priceCents    Int       @default(0)
+  wordCount     Int       @default(0)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  content           Content              @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  comicPages        ComicPage[]
+  novelContent      NovelChapterContent?
+  audioChapter      AudioChapter?
+  readingProgress   ReadingProgress[]
+  listeningProgress ListeningProgress[]
+  bookmarks         Bookmark[]
+  entitlements      Entitlement[]
+
+  @@unique([contentId, chapterNumber])
+  @@unique([contentId, slug])
+  @@index([contentId])
+}
+
+model ComicPage {
+  id          String   @id @default(uuid())
+  chapterId   String
+  pageNumber  Int
+  imageUrl    String
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([chapterId, pageNumber])
+  @@index([chapterId])
+}
+
+model NovelChapterContent {
+  id          String   @id @default(uuid())
+  chapterId   String   @unique
+  textContent String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+}
+
+model Audiobook {
+  id                   String   @id @default(uuid())
+  contentId            String   @unique
+  narrator             String
+  totalDurationSeconds Int      @default(0)
+  sampleAudioUrl       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+}
+
+model AudioChapter {
+  id              String   @id @default(uuid())
+  chapterId       String   @unique
+  audioUrl        String
+  durationSeconds Int
+  bitRate         Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+}
+
+model Library {
+  id        String       @id @default(uuid())
+  userId    String
+  contentId String
+  shelf     LibraryShelf @default(CURRENTLY_READING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId, shelf])
+}
+
+model ReadingProgress {
+  id               String   @id @default(uuid())
+  userId           String
+  contentId        String
+  chapterId        String
+  pageNumber       Int      @default(1)
+  scrollPosition   Float    @default(0)
+  percentCompleted Float    @default(0)
+  lastReadAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
+}
+
+model ListeningProgress {
+  id               String   @id @default(uuid())
+  userId           String
+  contentId        String
+  chapterId        String
+  positionSeconds  Float    @default(0)
+  durationSeconds  Float    @default(0)
+  percentCompleted Float    @default(0)
+  lastListenedAt   DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
+}
+
+model Bookmark {
+  id                   String   @id @default(uuid())
+  userId               String
+  contentId            String
+  chapterId            String
+  pageNumber           Int?
+  audioPositionSeconds Float?
+  note                 String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([userId, contentId])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  userId     String
+  contentId  String
+  rating     Int
+  title      String?
+  body       String
+  isApproved Boolean  @default(true)
+  isSpoiler  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content      Content             @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  helpfulVotes ReviewHelpfulVote[]
+
+  @@unique([userId, contentId])
+  @@index([contentId])
+  @@index([rating])
+}
+
+model ReviewHelpfulVote {
+  id        String   @id @default(uuid())
+  userId    String
+  reviewId  String
+  isHelpful Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId])
+  @@index([reviewId])
+}
+
+model Order {
+  id              String          @id @default(uuid())
+  orderNumber     String          @unique
+  userId          String
+  amountCents     Int
+  currency        String          @default("INR")
+  status          OrderStatus     @default(CREATED)
+  provider        PaymentProvider @default(RAZORPAY)
+  providerOrderId String?
+  metadata        String?         // JSON string for line items / target content
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  payments Payment[]
+  refunds  Refund[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+model Payment {
+  id                String          @id @default(uuid())
+  orderId           String
+  providerPaymentId String          @unique
+  providerSignature String?
+  amountCents       Int
+  currency          String          @default("INR")
+  status            OrderStatus     @default(PENDING)
+  paymentMethod     String?
+  rawPayload        String?         // Sanitized webhook or verification response
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([orderId])
+  @@index([providerPaymentId])
+  @@index([status])
+}
+
+model Subscription {
+  id                     String             @id @default(uuid())
+  userId                 String
+  plan                   SubscriptionPlan   @default(FREE)
+  status                 SubscriptionStatus @default(ACTIVE)
+  providerSubscriptionId String?
+  startDate              DateTime           @default(now())
+  expiryDate             DateTime?
+  cancelledAt            DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Entitlement {
+  id        String            @id @default(uuid())
+  userId    String
+  contentId String?
+  chapterId String?
+  source    EntitlementSource @default(PURCHASE)
+  expiresAt DateTime?
+  createdAt DateTime          @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId, chapterId])
+  @@index([userId])
+  @@index([contentId])
+  @@index([chapterId])
+}
+
+model Refund {
+  id               String   @id @default(uuid())
+  orderId          String
+  paymentId        String?
+  providerRefundId String?
+  amountCents      Int
+  reason           String?
+  status           String   @default("PROCESSED")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  linkUrl   String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model NotificationPreferences {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  emailNotifications Boolean  @default(true)
+  pushNotifications  Boolean  @default(true)
+  inAppNotifications Boolean  @default(true)
+  marketingEmails    Boolean  @default(false)
+  securityAlerts     Boolean  @default(true)
+  newReleaseAlerts   Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  ipAddress  String?
+  userAgent  String?
+  details    String?  // JSON string of sanitized details
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+}
