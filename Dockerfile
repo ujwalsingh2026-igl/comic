@@ -17,7 +17,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 RUN npm run build
-
+RUN mkdir -p /app/.data/postgres
+RUN chown -R node:node /app/.data
 # Stage 3: Production runner
 FROM base AS runner
 ENV NODE_ENV=production
