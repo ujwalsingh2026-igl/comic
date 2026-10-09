@@ -227,11 +227,30 @@
     </div>
 
     <div class="server-config">
-      <label for="serverUrl">Cloud Server Connection</label>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <label for="serverUrl" style="margin-bottom: 0;">Backend Server Connection</label>
+        <span id="connStatus" style="font-size: 11px; font-weight: 600; color: #94a3b8;">Not tested</span>
+      </div>
       <input type="text" id="serverUrl" placeholder="https://your-platform.vercel.app or http://10.0.2.2:3000">
-      <button class="btn btn-primary" style="background: #3b82f6;" onclick="saveAndConnect()">
-        Connect to Server
+
+      <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+        <button type="button" class="btn" style="background: #1e293b; color: #94a3b8; font-size: 11px; padding: 6px 10px; flex: 1;" onclick="setPreset('http://10.0.2.2:3000')">
+          Android Emulator
+        </button>
+        <button type="button" class="btn" style="background: #1e293b; color: #94a3b8; font-size: 11px; padding: 6px 10px; flex: 1;" onclick="testConnection()">
+          Test Ping
+        </button>
+      </div>
+
+      <button class="btn btn-primary" style="background: #6366f1;" onclick="saveAndConnect()">
+        Connect & Open Platform
       </button>
+
+      <div style="margin-top: 12px; padding: 10px; background: rgba(15, 23, 42, 0.6); border-radius: 8px; font-size: 11px; color: #64748b; line-height: 1.4;">
+        <strong style="color: #94a3b8;">Connection Tips:</strong><br>
+        • Android Emulator: Use <code style="color: #a5b4fc;">http://10.0.2.2:3000</code><br>
+        • Physical Phone: Use your PC's local IP (e.g. <code style="color: #a5b4fc;">http://192.168.1.X:3000</code>) or deployed Vercel domain.
+      </div>
     </div>
   </main>
 
@@ -240,29 +259,55 @@
   </footer>
 
   <script>
-    const defaultUrl = localStorage.getItem('omniverse_server_url') || '';
-    if (defaultUrl) {
-      document.getElementById('serverUrl').value = defaultUrl;
+    const defaultUrl = localStorage.getItem('omniverse_server_url') || 'http://10.0.2.2:3000';
+    document.getElementById('serverUrl').value = defaultUrl;
+
+    function setPreset(url) {
+      document.getElementById('serverUrl').value = url;
+      testConnection();
     }
 
-    function launchPlatform() {
+    async function testConnection() {
       const url = document.getElementById('serverUrl').value.trim();
-      if (url) {
-        window.location.href = url;
-      } else {
-        alert('Omniverse Native App Initialized! Enter your deployed Vercel/server URL above to connect to live cloud content, or run locally.');
+      const statusEl = document.getElementById('connStatus');
+      if (!url) {
+        statusEl.innerHTML = '<span style="color: #f87171;">Enter URL</span>';
+        return false;
+      }
+
+      statusEl.innerHTML = '<span style="color: #fbbf24;">Testing...</span>';
+      try {
+        const pingUrl = url.replace(/\/+$/, '') + '/api/auth/me';
+        const res = await fetch(pingUrl, { method: 'GET', signal: AbortSignal.timeout(4000) });
+        if (res.ok) {
+          statusEl.innerHTML = '<span style="color: #34d399;">● Online</span>';
+          return true;
+        } else {
+          statusEl.innerHTML = '<span style="color: #fb923c;">● Responded (' + res.status + ')</span>';
+          return true;
+        }
+      } catch (e) {
+        statusEl.innerHTML = '<span style="color: #f87171;">● Unreachable</span>';
+        return false;
       }
     }
 
-    function saveAndConnect() {
+    function launchPlatform() {
+      saveAndConnect();
+    }
+
+    async function saveAndConnect() {
       const url = document.getElementById('serverUrl').value.trim();
       if (!url) {
-        alert('Please enter a server URL (e.g. https://comic.vercel.app or http://10.0.2.2:3000 for emulator).');
+        alert('Please enter a server URL (e.g. your Vercel URL or http://10.0.2.2:3000 for emulator).');
         return;
       }
       localStorage.setItem('omniverse_server_url', url);
       window.location.href = url;
     }
+
+    // Auto-test on load if URL is set
+    setTimeout(testConnection, 800);
   </script>
 </body>
 </html>

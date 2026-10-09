@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, openLoginModal } = useAuth();
   const [metrics, setMetrics] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'METRICS' | 'USERS' | 'CONTENT' | 'ORDERS' | 'AUDIT'>('METRICS');
   const [loading, setLoading] = useState(true);
@@ -159,12 +159,35 @@ export default function AdminPage() {
 
   if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
     return (
-      <div className="max-w-md mx-auto py-24 text-center space-y-4">
-        <Shield className="w-12 h-12 text-red-400 mx-auto" />
-        <h2 className="text-xl font-bold text-white">Access Denied</h2>
-        <p className="text-xs text-slate-400">
-          You do not have administrative privileges to view this panel.
-        </p>
+      <div className="max-w-md mx-auto py-20 px-4 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto">
+          <Shield className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black text-white tracking-tight">Admin Authentication Required</h2>
+          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            Please log in with an administrator account to access platform metrics, user governance, content publishing, and security audit logs.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-2 text-xs">
+          <div className="font-semibold text-slate-300">Default Administrator Credentials:</div>
+          <div className="flex justify-between text-slate-400">
+            <span>Email:</span>
+            <span className="font-mono text-indigo-400">admin@platform.com</span>
+          </div>
+          <div className="flex justify-between text-slate-400">
+            <span>Password:</span>
+            <span className="font-mono text-indigo-400">Admin@12345</span>
+          </div>
+        </div>
+
+        <button
+          onClick={openLoginModal}
+          className="w-full py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition shadow-lg shadow-indigo-600/30"
+        >
+          Sign In as Administrator
+        </button>
       </div>
     );
   }

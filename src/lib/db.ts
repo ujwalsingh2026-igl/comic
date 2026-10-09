@@ -24,12 +24,23 @@ class DatabaseManager implements DbClient {
         connectionString: env.DATABASE_URL,
         ssl: env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
       });
+      await this.runMigrationsIfNeeded();
       this.isInitialized = true;
     } else {
       // Embedded PostgreSQL via PGlite
-      const dataDir = path.resolve(process.cwd(), '.data/postgres');
+      let baseDir = process.cwd();
+      try {
+        const testDir = path.resolve(baseDir, '.data');
+        if (!fs.existsSync(testDir)) fs.mkdirSync(testDir, { recursive: true });
+      } catch {
+        baseDir = '/tmp';
+      }
+
+      const dataDir = path.resolve(baseDir, '.data/postgres');
       if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+        try {
+          fs.mkdirSync(dataDir, { recursive: true });
+        } catch {}
       }
 
       try {
@@ -41,7 +52,9 @@ class DatabaseManager implements DbClient {
         try {
           fs.rmSync(dataDir, { recursive: true, force: true });
         } catch {}
-        fs.mkdirSync(dataDir, { recursive: true });
+        try {
+          fs.mkdirSync(dataDir, { recursive: true });
+        } catch {}
         this.pgliteInstance = new PGlite(dataDir);
         await this.pgliteInstance.waitReady;
       }
@@ -51,23 +64,28 @@ class DatabaseManager implements DbClient {
   }
 
   private async runMigrationsIfNeeded(): Promise<void> {
-    if (!this.pgliteInstance) return;
-
     try {
-      // Check if User table exists
-      const check = await this.pgliteInstance.query(
-        "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='User';"
+      const migrationPath = path.resolve(
+        process.cwd(),
+        'prisma/migrations/20261005_init/migration.sql'
       );
-      if (check.rows.length === 0) {
-        // Run migration DDL
-        const migrationPath = path.resolve(
-          process.cwd(),
-          'prisma/migrations/20261005_init/migration.sql'
+      const sql = fs.existsSync(migrationPath) ? fs.readFileSync(migrationPath, 'utf8') : '';
+
+      if (this.pgPool) {
+        const check = await this.pgPool.query(
+          "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='User';"
         );
-        if (fs.existsSync(migrationPath)) {
-          const sql = fs.readFileSync(migrationPath, 'utf8');
+        if ((check.rowCount || 0) === 0 && sql) {
+          await this.pgPool.query(sql);
+          console.log('[DB] Applied initial PostgreSQL schema migration to external pgPool.');
+        }
+      } else if (this.pgliteInstance) {
+        const check = await this.pgliteInstance.query(
+          "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='User';"
+        );
+        if (check.rows.length === 0 && sql) {
           await this.pgliteInstance.exec(sql);
-          console.log('[DB] Applied initial PostgreSQL schema migration successfully.');
+          console.log('[DB] Applied initial PostgreSQL schema migration to PGlite successfully.');
         }
       }
     } catch (err) {

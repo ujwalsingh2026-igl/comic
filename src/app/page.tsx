@@ -16,7 +16,23 @@ import {
 export const revalidate = 60; // ISR cache 60s
 
 export default async function HomePage() {
-  const feed: any = await ContentService.getHomeFeed();
+  let feed: any = {
+    featured: [],
+    trendingComics: [],
+    popularNovels: [],
+    popularAudiobooks: [],
+    newReleases: [],
+    genres: [],
+    popularAuthors: [],
+  };
+
+  try {
+    const res = await ContentService.getHomeFeed();
+    if (res) feed = res;
+  } catch (err) {
+    console.error('[HomePage] Error loading home feed:', err);
+  }
+
   const heroItem: any = feed?.featured?.[0];
 
   return (
@@ -104,7 +120,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
-            {feed.trendingComics.map((comic: any) => (
+            {(feed?.trendingComics || []).map((comic: any) => (
               <ContentCard key={comic.id} {...comic} />
             ))}
           </div>
@@ -130,7 +146,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
-            {feed.popularNovels.map((novel: any) => (
+            {(feed?.popularNovels || []).map((novel: any) => (
               <ContentCard key={novel.id} {...novel} />
             ))}
           </div>
@@ -156,7 +172,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
-            {feed.popularAudiobooks.map((audio: any) => (
+            {(feed?.popularAudiobooks || []).map((audio: any) => (
               <ContentCard key={audio.id} {...audio} />
             ))}
           </div>
@@ -174,7 +190,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {feed.genres.map((g: any) => (
+            {(feed?.genres || []).map((g: any) => (
               <Link
                 key={g.id}
                 href={`/search?genre=${g.slug}`}
@@ -207,7 +223,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {feed.popularAuthors.map((author: any) => (
+            {(feed?.popularAuthors || []).map((author: any) => (
               <Link
                 key={author.id}
                 href={`/author/${author.slug}`}

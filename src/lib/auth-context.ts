@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { AuthService } from '@/services/auth.service';
 import { verifyAuthToken } from '@/lib/security';
 import { AppError } from '@/lib/api-response';
+import { db } from '@/lib/db';
 
 export interface AuthenticatedUser {
   id: string;
@@ -37,8 +38,13 @@ export async function getOptionalUser(req: NextRequest): Promise<AuthenticatedUs
     if (bearerToken) {
       const payload = await verifyAuthToken(bearerToken);
       if (payload && payload.userId) {
-        const sessionResult = await AuthService.validateSession(bearerToken);
-        if (sessionResult) return sessionResult.user;
+        const user = await db.queryOne<AuthenticatedUser>(
+          `SELECT id, name, email, phone, username, role, "avatarUrl", "emailVerified", "phoneVerified"
+           FROM "User"
+           WHERE id = $1 AND status != 'SUSPENDED';`,
+          [payload.userId]
+        );
+        if (user) return user;
       }
     }
 
