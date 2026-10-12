@@ -9,8 +9,10 @@
     "lint": "next lint",
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
+    "icons:generate": "java scripts/GenerateAndroidIcons.java",
     "apk:sync": "cap sync android",
-    "apk:build": "cap sync android && cd android && gradlew.bat assembleDebug"
+    "apk:build": "cap sync android && cd android && gradlew.bat assembleDebug",
+    "apk:bundle": "cap sync android && cd android && gradlew.bat bundleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
