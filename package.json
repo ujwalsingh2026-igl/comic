@@ -12,7 +12,8 @@
     "icons:generate": "java scripts/GenerateAndroidIcons.java",
     "apk:sync": "cap sync android",
     "apk:build": "cap sync android && cd android && gradlew.bat assembleDebug",
-    "apk:bundle": "cap sync android && cd android && gradlew.bat bundleRelease"
+    "apk:bundle": "cap sync android && cd android && gradlew.bat bundleRelease",
+    "aab:to-apk": "java -jar bundletool.jar build-apks --bundle=apk/omniverse-release.aab --output=apk/bundle.apks --mode=universal && tar -xf apk/bundle.apks -C apk universal.apk && powershell -Command \"Move-Item apk/universal.apk apk/omniverse-release.apk -Force; Remove-Item apk/bundle.apks -Force\""
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
